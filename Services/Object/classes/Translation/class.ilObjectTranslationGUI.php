@@ -557,7 +557,22 @@ class ilObjectTranslationGUI
 
         foreach ($langs_to_be_deleted as $lang) {
             $this->obj_trans->removeLanguage($lang);
+            if ($this->obj->getType() === 'lm') {
+                global $DIC;
+                $ilDB = $DIC->database();
+
+                if ($lang === '-' || $lang === $this->obj_trans->getMasterLanguage()) {
+                    continue;
+                }
+
+                $ilDB->manipulateF(
+                    "DELETE FROM page_object WHERE parent_id = %s AND lang = %s",
+                    ['integer', 'text'],
+                    [$this->obj->getId(), $lang]
+                );
+            }
         }
+        
         $this->obj_trans->save();
         $this->tpl->setOnScreenMessage('success', $this->lng->txt('saved_successfully'), true);
         $this->ctrl->redirect($this, self::CMD_LIST_TRANSLATIONS);
